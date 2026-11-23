@@ -131,3 +131,11 @@
 - Asked: Run `python3 --version`.
 - Changed: Checked the installed Python interpreter version.
 - Worked: Yes. Output was `Python 3.15.2`.
+
+- Asked: Add File menu Save/Open for beam designs using JSON, include support, span, section, deflection limit and loads, and prevent changing limits; remove “Saving designs” from the out-of-scope spec section.
+- Changed: Added JSON Save/Open commands to the Tkinter app. Files store support, span, section, the L/360 deflection limit, the safety factor, and the uniform load. Opening validates the stored limit against fixed L/360 before applying inputs. Updated the spec to document file support and fixed limits. “Saving designs” was already absent from the Out of scope section.
+- Worked: Code and specification changes are in place. Runtime behavior was not tested.
+
+- Asked: Move Save/Open from the File menu to buttons at the bottom.
+- Changed: Removed the File menu and added separate Open and Save buttons anchored to the bottom of the input panel. Updated the spec to reflect the button placement.
+- Worked: Changes are in place; runtime appearance was not tested.

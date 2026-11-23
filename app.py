@@ -1,7 +1,8 @@
 """Tkinter front end for the Beam Designer."""
 
+import json
 import tkinter as tk
-from tkinter import ttk
+from tkinter import filedialog, messagebox, ttk
 import numpy as np
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -21,6 +22,94 @@ class BeamApp(tk.Tk):
         self.vars = {}
         self.errors = {}
         self._build()
+        self.calculate()
+
+    def _design_data(self):
+        span = float(self.vars["Span (ft)"].get())
+        safety = float(self.vars["Additional safety factor"].get())
+        intensity = float(self.vars["Intensity"].get())
+        start = float(self.vars["Start (ft)"].get())
+        end = float(self.vars["End (ft)"].get())
+        support = self.vars["Support"].get()
+        section = self.vars["Member"].get()
+        # Analyze first so saves and opens obey the same limits and validation as Calculate.
+        analyze(span, support, [UniformLoad(intensity, start, end)], MEMBERS[section], safety)
+        return {
+            "format": "beam-designer",
+            "version": 1,
+            "support": support,
+            "span_ft": span,
+            "section": section,
+            "deflection_limit_in": span / 30.0,  # L/360, with span stored in feet.
+            "additional_safety_factor": safety,
+            "loads": [{"type": "uniform", "intensity_kip_ft": intensity,
+                       "start_ft": start, "end_ft": end}],
+        }
+
+    def save_design(self):
+        path = filedialog.asksaveasfilename(
+            title="Save beam design", defaultextension=".json",
+            filetypes=(("JSON files", "*.json"), ("All files", "*")),
+        )
+        if not path:
+            return
+        try:
+            data = self._design_data()
+            with open(path, "w", encoding="utf-8") as design_file:
+                json.dump(data, design_file, indent=2)
+                design_file.write("\n")
+        except (OSError, ValueError, KeyError) as exc:
+            messagebox.showerror("Could not save design", str(exc), parent=self)
+            return
+        self.status.configure(text=f"Design saved to {path}", foreground="#18704e")
+
+    def open_design(self):
+        path = filedialog.askopenfilename(
+            title="Open beam design",
+            filetypes=(("JSON files", "*.json"), ("All files", "*")),
+        )
+        if not path:
+            return
+        try:
+            with open(path, "r", encoding="utf-8") as design_file:
+                data = json.load(design_file)
+            if not isinstance(data, dict) or data.get("format") != "beam-designer" or data.get("version") != 1:
+                raise ValueError("This is not a supported Beam Designer JSON file.")
+            span = float(data["span_ft"])
+            fixed_limit = span / 30.0  # L/360, converted from feet to inches.
+            stored_limit = float(data["deflection_limit_in"])
+            if not np.isclose(stored_limit, fixed_limit, rtol=1e-9, atol=1e-9):
+                raise ValueError("The file's deflection limit does not match the fixed L/360 limit.")
+            support = data["support"]
+            section = data["section"]
+            if support not in ("Simply supported", "Cantilever"):
+                raise ValueError("Unsupported support condition in design file.")
+            if section not in MEMBERS:
+                raise ValueError("The section in this design file is not available.")
+            loads = data["loads"]
+            if not isinstance(loads, list) or len(loads) != 1 or loads[0].get("type") != "uniform":
+                raise ValueError("Design files must contain one uniform load.")
+            load = loads[0]
+            intensity = float(load["intensity_kip_ft"])
+            start = float(load["start_ft"])
+            end = float(load["end_ft"])
+            safety = float(data.get("additional_safety_factor", 1.0))
+            analyze(span, support, [UniformLoad(intensity, start, end)], MEMBERS[section], safety)
+        except (OSError, json.JSONDecodeError, ValueError, TypeError, KeyError, AttributeError) as exc:
+            messagebox.showerror("Could not open design", str(exc), parent=self)
+            return
+
+        values = {
+            "Support": support,
+            "Span (ft)": str(span),
+            "Member": section,
+            "Additional safety factor": str(safety),
+            "Intensity": str(intensity),
+            "Start (ft)": str(start),
+            "End (ft)": str(end),
+        }
+        for name, value in values.items():
+            self.vars[name].set(value)
         self.calculate()
 
     def _build(self):
@@ -46,6 +135,14 @@ class BeamApp(tk.Tk):
         self.status.grid(sticky="w")
         self.results = ttk.Label(left, text="", justify="left", wraplength=250)
         self.results.grid(sticky="w", pady=10)
+        spacer = ttk.Frame(left)
+        spacer.grid(sticky="nsew")
+        left.rowconfigure(spacer.grid_info()["row"], weight=1)
+        design_buttons = ttk.Frame(left)
+        design_buttons.grid(sticky="ew", pady=(6, 0))
+        design_buttons.columnconfigure((0, 1), weight=1)
+        ttk.Button(design_buttons, text="Open…", command=self.open_design).grid(row=0, column=0, sticky="ew", padx=(0, 4))
+        ttk.Button(design_buttons, text="Save…", command=self.save_design).grid(row=0, column=1, sticky="ew", padx=(4, 0))
         for var in self.vars.values():
             var.trace_add("write", self._mark_stale)
 
