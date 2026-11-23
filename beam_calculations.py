@@ -39,8 +39,8 @@ def analyze(span_ft, support, loads, member, safety_factor=1.0, points=1201):
     if support == "Simply supported":
         right = centroid_moment / L
         left = total - right
-        V = left - sum(w * np.clip(x-a, 0, b-a) for w, a, b in wloads)
-        M = left*x - sum(w * np.where(x <= a, 0, np.where(x < b, (x-a)**2/2, (b-a)*(x-(a+b)/2))) for w, a, b in wloads)
+        V = left - sum((w * np.clip(x-a, 0, b-a) for w, a, b in wloads), np.zeros_like(x))
+        M = left*x - sum((w * np.where(x <= a, 0, np.where(x < b, (x-a)**2/2, (b-a)*(x-(a+b)/2))) for w, a, b in wloads), np.zeros_like(x))
         curvature = M / (E*I)
         dx = x[1]-x[0]
         slope0 = -np.trapezoid((L-x)*curvature, x) / L
@@ -50,8 +50,8 @@ def analyze(span_ft, support, loads, member, safety_factor=1.0, points=1201):
     else:
         left, right = total, 0.0
         left_moment = -centroid_moment
-        V = -total + sum(w * np.clip(b-x, 0, b-a) for w, a, b in wloads)
-        M = -sum(w * np.where(x <= a, b-a, np.where(x < b, (b-x), 0))**2/2 for w, a, b in wloads)
+        V = -sum((w * np.clip(b-np.maximum(x, a), 0, b-a) for w, a, b in wloads), np.zeros_like(x))
+        M = -sum((w * (np.clip(b-x, 0, None)**2 - np.clip(a-x, 0, None)**2)/2 for w, a, b in wloads), np.zeros_like(x))
         # Integrate from fixed end: y(0)=slope(0)=0.
         curvature = M / (E*I)
         dx = x[1]-x[0]

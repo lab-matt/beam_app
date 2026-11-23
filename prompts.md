@@ -1,5 +1,21 @@
 # Request log
 
+- Asked: Run the validations and return a table of specifications and results.
+- Changed: Re-ran syntax, six beam reference cases, safety-factor behavior, and invalid-input checks after the calculation repairs.
+- Worked: Yes. Every executed validation passed.
+
+- Asked: Identify and repair the failed validation cases.
+- Changed: Made empty-load shear and moment arrays for both supports, corrected cantilever partial-load shear and moment, and corrected the partial-span simply supported deflection reference. Added a cantilever partial-load reference case.
+- Worked: Re-ran the documented full-span, partial-span, and unloaded cases. All calculated reactions, moments, and deflections matched their references, and the zero-load cantilever no longer crashes.
+
+- Asked: Run the validations and return a table of specifications and results.
+- Changed: Created a local `.venv` with NumPy and ran syntax checks plus the documented beam cases, safety-factor checks, and invalid-input checks.
+- Worked: Partially. Full-span simply supported, full-span cantilever, and partial-span simply supported results matched the documented references; zero-load simply supported passed. Zero-load cantilever failed with a scalar-array bug in `beam_calculations.py`, and checks after that failure were not completed. No source fix was made.
+
+- Asked: Run the validations and return a table of specifications and results.
+- Changed: Attempted to execute documented calculation cases and Python syntax checks; no source changes were made.
+- Worked: Not run. Python commands exited with code 134 before producing output, so calculation and syntax results could not be confirmed.
+
 - Asked: Set up a public GitHub repository for the app and provide any needed steps.
 - Changed: Checked for an existing remote and added Python/cache exclusions to `.gitignore`.
 - Worked: No remote or repository-creation capability is available here; the user needs to create the empty public repository and add it as the remote.
@@ -111,3 +127,7 @@
 - Asked: Create a Git commit for the current project changes.
 - Changed: Recorded this request and its outcome; committed the updates to `spec.md`.
 - Worked: Yes. The local commit was created successfully.
+
+- Asked: Run `python3 --version`.
+- Changed: Checked the installed Python interpreter version.
+- Worked: Yes. Output was `Python 3.15.2`.
