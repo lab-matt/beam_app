@@ -1,5 +1,9 @@
 # Request log
 
+- Asked: Implement the planned Tkinter Beam Designer, keep calculations separate, limit examples to validated cases, and support keyboard navigation.
+- Changed: Added app.py, beam_calculations.py, and member_data.py; removed the unsupported W18x35 case from spec.md; updated validation notes.
+- Worked: Implementation is in place. Automated checks have not yet been run.
+
 - Asked: Set up the project folders and document the layout; do not build anything else.
 - Changed: Added the top-level project guidance and specification, created the four numbered folders with README files, and kept `index.html` at the top level as the required app entry point.
 - Worked: Yes. The requested layout is in place; no app functionality was built.

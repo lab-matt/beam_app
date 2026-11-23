@@ -43,6 +43,9 @@ without the mockup's point load.
 - Inputs in a panel on the left
 - beam and diagrams on the right
 - window that can be resized
+- Make sure that it's esailiy navigatable using the keyboard, including tabbing through inputs and pressing
+  Calculate with Enter or Space.
+- Uniform loads may cover the full span or a partial span.
 
 ## Input validation and recalculation
 - Require finite numeric inputs, a span greater than zero, and an
@@ -70,10 +73,6 @@ deflection 0.609 in.
   stress limit without changing reactions, diagrams, or the L/360 limit.
 - Check invalid and missing inputs, red field styling and error messages,
   and the need-to-recalculate state after an input changes.
-
-Simply supported, 30 ft, W18x35, uniform 2 kips/ft from 0 to 15 ft
-   only: reactions 22.5 k (left) and 7.5 k (right); max moment
-   126.6 kip-ft at 11.25 ft.
 
 ## Platform
 - Python desktop app using Tkinter, started with `python app.py`
