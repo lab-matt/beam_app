@@ -155,3 +155,7 @@
 - Asked: Add a PDF calculation sheet with inputs at the top, checks and diagrams below, styled after the reference, with a button matching Save Results and placed underneath it.
 - Changed: Added a full-width Save PDF button below Save Results and a one-page Letter portrait PDF layout containing support, span, section, load, safety factor, deflection limit, reactions, bending and deflection checks, beam/loading illustration, and shear, moment, and deflection diagrams. PDF export requires current calculation results.
 - Worked: Generated a one-page PDF for a simply supported example and visually inspected its rendered page. The save dialog, stale-results prompt, cancellation, and cantilever layout were not exercised through the GUI.
+
+- Asked: Write a short README explaining what the app does, which packages to install, and how to start it.
+- Changed: Replaced the placeholder README with a brief app description, NumPy/Matplotlib install command, Tkinter note, and `python app.py` startup command.
+- Worked: Documentation updated; app was not run for this documentation change.
