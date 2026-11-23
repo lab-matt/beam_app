@@ -40,6 +40,9 @@ of bending stress and deflection for the specified loading.
 Clean and professional, with an example beam loaded when it opens.
 Use the uniform-load-only validation example below for the initial beam,
 without the mockup's point load.
+- Inputs in a panel on the left
+- beam and diagrams on the right
+- window that can be resized
 
 ## Input validation and recalculation
 - Require finite numeric inputs, a span greater than zero, and an
@@ -68,36 +71,16 @@ deflection 0.609 in.
 - Check invalid and missing inputs, red field styling and error messages,
   and the need-to-recalculate state after an input changes.
 
+Simply supported, 30 ft, W18x35, uniform 2 kips/ft from 0 to 15 ft
+   only: reactions 22.5 k (left) and 7.5 k (right); max moment
+   126.6 kip-ft at 11.25 ft.
+
+## Platform
+- Python desktop app using Tkinter, started with `python app.py`
+- Calculations with numpy, kept in their own module, separate from
+  the window code
+- Diagrams drawn with matplotlib, embedded in the window
+
 ## Out of scope
 Point loads, continuous beams, buckling, shear-strength checks, and
 connection design.
-
-
-## Build the App in Five Testable Stages
-
-### Summary
-
-The current spec.md only says this is a single-file web app served from the top-level index.html; it does not describe the app’s purpose or calculations. Use this staged approach as a general development sequence, and fill in the app-specific fields and formulas once the specification defines them.
-
-### Stages and Checks
-
-1. Layout mockup — Create the page structure and visual styling in index.html, using placeholder values and controls. Add no real calculations.
-   Check: Open the page locally and confirm the sections, labels, and controls are easy to see and use at desktop and phone widths.
-2. Input behavior — Make the controls accept and display user input. Keep results as placeholders.
-   Check: Enter, edit, and clear values; confirm the page responds as expected and handles empty or malformed input clearly.
-3. Calculation logic — Implement the app’s specified calculations and connect them to the inputs.
-   Check: Compare results against hand-calculated examples, including boundary values and invalid inputs.
-4. Results and feedback — Show calculated outputs with appropriate formatting and useful validation or error messages.
-   Check: Confirm outputs update when inputs change, are readable, and errors identify what needs fixing.
-5. Polish and publish readiness — Refine layout and accessibility, then verify the single-file page works as a GitHub Pages entry point.
-   Check: Test keyboard navigation, labels, responsive layout, and loading from the top-level index.html.
-
-### Interfaces
-
-Keep the app self-contained in the top-level index.html, as required by spec.md. The current specification defines no particular input, output, or calculation interface.
-
-### Assumptions
-
-- The app’s domain, input fields, formulas, and expected outputs are not specified yet.
-- Each stage should be reviewed in the browser before beginning the next.
-- No code has been written as part of this plan.
