@@ -1,5 +1,9 @@
 # Request log
 
+- Asked: Set up a public GitHub repository for the app and provide any needed steps.
+- Changed: Checked for an existing remote and added Python/cache exclusions to `.gitignore`.
+- Worked: No remote or repository-creation capability is available here; the user needs to create the empty public repository and add it as the remote.
+
 - Asked: Implement the planned Tkinter Beam Designer, keep calculations separate, limit examples to validated cases, and support keyboard navigation.
 - Changed: Added app.py, beam_calculations.py, and member_data.py; removed the unsupported W18x35 case from spec.md; updated validation notes.
 - Worked: Implementation is in place. Automated checks have not yet been run.
