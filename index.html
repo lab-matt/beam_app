@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Beam Designer</title>
+  <style>
+    :root { color-scheme: light; --ink:#182b3a; --muted:#617383; --line:#dce5ea; --paper:#fff; --bg:#f3f6f8; --blue:#176b87; --soft:#eaf4f7; --green:#18704e; }
+    * { box-sizing:border-box }
+    body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif }
+    header { background:#102b3c; color:white; padding:22px max(24px,calc((100% - 1240px)/2)); display:flex; align-items:center; justify-content:space-between; gap:16px }
+    .brand { font-weight:750; font-size:20px; letter-spacing:.01em } header p { margin:3px 0 0; color:#c5d8e1; font-size:13px }
+    .sample { color:#d4e6ed; font-size:13px }
+    main { max-width:1240px; margin:26px auto 48px; padding:0 22px }
+    .intro { display:flex; justify-content:space-between; align-items:end; gap:20px; margin:0 0 20px }
+    h1 { margin:0; font-size:25px; letter-spacing:-.025em } .intro p { margin:5px 0 0;color:var(--muted) }
+    .badge { background:#e2f2e9;color:var(--green);font-size:12px;font-weight:700;padding:7px 11px;border-radius:20px;white-space:nowrap }
+    .layout { display:grid;grid-template-columns:330px minmax(0,1fr);gap:18px;align-items:start }
+    .card { background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:0 2px 8px #18344708 }
+    .card h2 { font-size:15px;margin:0;padding:16px 18px;border-bottom:1px solid var(--line) }
+    .form { padding:16px 18px 18px } .group { margin-bottom:17px } .group:last-child {margin:0}
+    label,.label { display:block;font-size:12px;color:#536879;font-weight:650;margin-bottom:6px }
+    select,input { font:inherit;color:var(--ink);background:white;border:1px solid #cbd7df;border-radius:7px;padding:9px 10px;width:100%;min-height:40px }
+    .row { display:grid;grid-template-columns:1fr 100px;gap:9px } .unit-field { position:relative } .unit-field input { padding-right:48px } .unit { position:absolute;right:10px;top:10px;color:#788996;font-size:12px }
+    .load-head { display:flex;justify-content:space-between;align-items:center;margin-bottom:8px } .load-head .label { margin:0 }
+    .member-controls{display:flex;justify-content:flex-end;align-items:end}.calculate{min-height:40px;width:var(--field-width,100%);border:0;border-radius:7px;background:var(--blue);color:white;font:700 13px inherit;cursor:pointer}.calculate:hover{background:#10566e}
+    .add { border:0;background:var(--soft);color:var(--blue);font:700 12px inherit;padding:6px 9px;border-radius:6px }
+    .load-row { display:grid;grid-template-columns:1fr 1fr 22px;gap:7px;margin-bottom:8px } .load-row input {min-width:0;padding:8px;font-size:13px}
+    .load-row .unit-field input {padding-right:31px} .load-row .unit {right:7px;font-size:11px;top:11px} .remove {align-self:center;color:#82919d;font-size:18px;text-align:center}
+    .note { font-size:11px;color:#82919d;margin:8px 0 0 }
+    .error {color:#b42318;font-size:11px;margin:5px 0 0}.invalid select,.invalid input {border-color:#c62828;background:#fff6f5;box-shadow:0 0 0 1px #c62828}.stale {color:#8a4b08;background:#fff4d6;border:1px solid #f0d48a;border-radius:7px;padding:9px 12px;font-size:12px}
+    .right { display:grid;gap:16px;--drawing-padding:20px } .beam-card {padding:18px var(--drawing-padding) 14px} .section-title {display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}.section-title h2 {padding:0;border:0}
+    .unit-tag {font-size:11px;color:var(--muted);background:#f0f4f6;padding:5px 8px;border-radius:5px}
+    /* Shared padding and viewBox width keep the beam and plot endpoints aligned. */
+    svg {width:100%;display:block} .beam-svg,.diagram-svg {height:auto}
+    .plot-tabs {overflow:hidden}.tab-list {display:flex;gap:4px;padding:10px 14px 0;border-bottom:1px solid var(--line)} .tab {border:0;background:transparent;padding:9px 12px;color:var(--muted);font:600 13px inherit;border-bottom:2px solid transparent;cursor:pointer}.tab[aria-selected="true"]{color:var(--blue);border-color:var(--blue)}
+    .plot {padding:14px var(--drawing-padding) 10px}.plot h2 {padding:0;border:0;margin-bottom:4px;font-size:14px}.plot[hidden]{display:none}
+    .deflection {grid-column:1 / -1}
+    .table-wrap{overflow-x:auto}.overview{width:100%;border-collapse:collapse;font-size:13px}.overview th,.overview td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--line);white-space:nowrap}.overview th{color:var(--muted);font-size:11px;font-weight:650;background:#f8fafb}.overview tr:last-child td{border-bottom:0}.table-head{display:flex;justify-content:space-between;align-items:center;padding:13px 15px;border-bottom:1px solid var(--line)}.table-head h2{font-size:14px;margin:0}.export-actions{display:flex;gap:7px}.export-actions button{background:var(--soft);border:0;border-radius:6px;padding:7px 9px;color:var(--blue);font:600 11px inherit;cursor:pointer}
+    .checks {display:grid;grid-template-columns:1fr 1fr;gap:12px}.check {padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px}.check strong {display:block;font-size:13px}.check span {font-size:11px;color:var(--muted)}.pass {background:#e2f2e9;color:var(--green);font-size:11px;font-weight:750;padding:5px 9px;border-radius:20px;white-space:nowrap}
+    footer {text-align:center;color:#8795a0;font-size:11px;margin-top:21px}
+    .support-row,.safety-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;align-items:start}.safety-row .member-controls{padding-top:23px}.load-row{grid-template-columns:repeat(3,minmax(0,1fr)) 22px}.load-row .unit-field:first-child input{padding-right:42px}input[aria-invalid="true"]{background:#ffd9d9;border-color:#c62828;box-shadow:0 0 0 1px #c62828}
+    @media(max-width:850px){.layout{grid-template-columns:1fr}}
+    @media(max-width:560px){header{align-items:flex-start;flex-direction:column;padding:18px 20px}.intro{align-items:flex-start;flex-direction:column}main{margin-top:20px;padding:0 14px}.form-grid{display:block}.checks{grid-template-columns:1fr}.right{--drawing-padding:15px}.tab{padding:9px 7px;font-size:12px}}
+  </style>
+</head>
+<body>
+  <header><div><div class="brand">▰ Beam Designer</div><p>Analyze a beam. Understand its performance.</p></div><div class="sample">Example design · Placeholder analysis</div></header>
+  <main>
+    <div class="intro"><div><h1>Beam analysis</h1><p>Set up a beam and review its structural response.</p></div><div class="badge">Example loaded</div></div>
+    <div class="layout">
+      <section class="card" aria-labelledby="inputs-title"><h2 id="inputs-title">Beam setup</h2><div class="form"><div class="form-grid">
+        <div class="group support-row"><div><label for="support">Support condition</label><select id="support"><option selected>Simply supported</option><option>Cantilever</option></select></div>
+        <div><label for="span">Span</label><div class="unit-field"><input id="span" value="20" inputmode="decimal"><span class="unit">ft</span></div></div></div>
+        <div class="group"><div class="load-head"><span class="label">Uniform loads</span><button class="add" type="button">+ Add load</button></div><div class="load-row"><div><label>Intensity</label><div class="unit-field"><input aria-label="Uniform load magnitude" value="1.00"/><span class="unit">kip/ft</span></div></div><div><label>Start</label><div class="unit-field"><input aria-label="Uniform load start from left" value="0"/><span class="unit">ft</span></div></div><div><label>End</label><div class="unit-field"><input aria-label="Uniform load end from left" value="20"/><span class="unit">ft</span></div></div><span class="remove" aria-hidden="true">×</span></div><p class="note">Start and end positions measured from the left end</p></div>
+        <div class="group"><label for="material">Material and member</label><select id="material"><option value="steel" selected>Steel A992 · W12×26</option><option value="wood">Mixed Southern Pine No. 2 · 2×8</option></select><p class="note">Illustrative properties: <a href="01_data/illustrative-properties.md">sources and assumptions</a></p></div>
+        <div class="group safety-row"><div><label for="safety-factor">Additional safety factor</label><div class="unit-field"><input id="safety-factor" type="number" value="1.0" min="1" step="0.1" aria-describedby="safety-note"><span class="unit">×</span></div><p class="note" id="safety-note">Divides the published allowable bending stress; default 1.0</p></div>
+        <div class="member-controls"><button class="calculate" id="calculate" type="button">Calculate</button></div></div>
+      </div></div></section>
+      <div class="right">
+        <section class="card beam-card"><div class="section-title"><h2>Beam and loading</h2><span class="unit-tag">Length in ft · Loads in kip</span></div>
+          <svg class="beam-svg" viewBox="0 0 760 190" role="img" aria-label="Simply supported 20 foot beam with a uniform load">
+            <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M1 1L7 4L1 7" fill="none" stroke="#176b87" stroke-width="1.5"/></marker></defs>
+            <text x="380" y="22" text-anchor="middle" fill="#536879" font-size="12">Uniform load · 1.00 kip/ft</text>
+            <path d="M100 40H660" stroke="#176b87" stroke-width="1.5" stroke-dasharray="4 4"/>
+            <g stroke="#176b87" stroke-width="1.5" marker-end="url(#arrow)"><path d="M120 44V76"/><path d="M190 44V76"/><path d="M260 44V76"/><path d="M330 44V76"/><path d="M400 44V76"/><path d="M470 44V76"/><path d="M540 44V76"/><path d="M610 44V76"/></g>
+            <rect x="100" y="82" width="560" height="12" rx="2" fill="#244c62"/>
+            <path d="M100 96L86 119H114Z" fill="#e7eef2" stroke="#748996"/><path d="M660 96L646 119H674Z" fill="#e7eef2" stroke="#748996"/><path d="M78 123H122M638 123H682" stroke="#748996" stroke-width="2"/>
+            <path d="M100 151H660M100 145V157M660 145V157" stroke="#8295a2" stroke-width="1"/><text x="380" y="169" text-anchor="middle" fill="#536879" font-size="12">20 ft</text><text x="100" y="139" text-anchor="middle" fill="#71828f" font-size="10">0</text><text x="660" y="139" text-anchor="middle" fill="#71828f" font-size="10">20</text>
+          </svg>
+        </section>
+        <div id="stale-results" class="stale" hidden>Inputs changed. Results need recalculation.</div>
+        <section class="card plot-tabs" aria-label="Analysis diagrams"><div class="tab-list" role="tablist" aria-label="Diagram type"><button class="tab" id="tab-shear" role="tab" aria-selected="true" aria-controls="panel-shear">Shear</button><button class="tab" id="tab-moment" role="tab" aria-selected="false" aria-controls="panel-moment">Moment</button><button class="tab" id="tab-deflection" role="tab" aria-selected="false" aria-controls="panel-deflection">Deflection</button></div>
+          <section class="plot" id="panel-shear" role="tabpanel" aria-labelledby="tab-shear"><h2>Shear diagram <span class="unit-tag">kip</span></h2><svg class="diagram-svg" viewBox="0 0 760 126" role="img" aria-label="Placeholder shear diagram"><path d="M100 12V100H660M100 55H660" fill="none" stroke="#cbd7df"/><path d="M100 27L380 70L380 83L660 100" fill="none" stroke="#176b87" stroke-width="2.5"/><text x="60" y="20" fill="#71828f" font-size="10">+12.5</text><text x="60" y="104" fill="#71828f" font-size="10">−12.5</text><text x="100" text-anchor="middle" y="119" fill="#71828f" font-size="10">0</text><text x="660" text-anchor="middle" y="119" fill="#71828f" font-size="10">20 ft</text></svg></section>
+          <section class="plot" id="panel-moment" role="tabpanel" aria-labelledby="tab-moment" hidden><h2>Moment diagram <span class="unit-tag">kip-ft</span></h2><svg class="diagram-svg" viewBox="0 0 760 126" role="img" aria-label="Placeholder moment diagram"><path d="M100 12V100H660" fill="none" stroke="#cbd7df"/><path d="M100 99Q380 10 660 99" fill="none" stroke="#176b87" stroke-width="2.5"/><text x="60" y="18" fill="#71828f" font-size="10">50.0</text><text x="100" text-anchor="middle" y="119" fill="#71828f" font-size="10">0</text><text x="660" text-anchor="middle" y="119" fill="#71828f" font-size="10">20 ft</text></svg></section>
+          <section class="plot" id="panel-deflection" role="tabpanel" aria-labelledby="tab-deflection" hidden><h2>Deflection diagram <span class="unit-tag">in</span></h2><svg class="diagram-svg" viewBox="0 0 760 126" role="img" aria-label="Placeholder deflection diagram"><path d="M100 14V99H660" fill="none" stroke="#cbd7df"/><path d="M100 99C220 102 254 50 380 49S538 102 660 99" fill="none" stroke="#176b87" stroke-width="2.5"/><text x="60" y="20" fill="#71828f" font-size="10">0</text><text x="380" text-anchor="middle" y="67" fill="#536879" font-size="11">0.609 in</text><text x="100" text-anchor="middle" y="117" fill="#71828f" font-size="10">0</text><text x="660" text-anchor="middle" y="117" fill="#71828f" font-size="10">20 ft</text></svg></section>
+        </section>
+        <section class="card"><div class="table-head"><h2>Figure overview</h2><div class="export-actions"><button type="button" id="csv-export">Export CSV</button><button type="button" id="md-export">Export Markdown</button></div></div><div class="table-wrap"><table class="overview" id="overview"><thead><tr><th>Result</th><th>Value</th><th>Unit</th></tr></thead><tbody><tr><td>Left reaction</td><td>12.5</td><td>kip</td></tr><tr><td>Right reaction</td><td>12.5</td><td>kip</td></tr><tr><td>Maximum moment</td><td>50.0</td><td>kip-ft</td></tr><tr><td>Maximum deflection</td><td>0.609</td><td>in</td></tr><tr><td>Bending strength</td><td>PASS · 20.0 / 36.0</td><td>ksi</td></tr><tr><td>Deflection limit</td><td>PASS · 0.609 / 0.667</td><td>in</td></tr></tbody></table></div></section>
+        <div class="checks"><section class="card check"><div><strong>Bending</strong><span>fb = 20.0 ksi · Allowable / factor = 36.0 ksi</span></div><div class="pass">PASS</div></section><section class="card check"><div><strong>Deflection</strong><span>0.609 in · Limit L/360 = 0.667 in</span></div><div class="pass">PASS</div></section></div>
+      </div>
+    </div>
+    <footer>Illustrative analysis · Steel bending uses a historical fully braced limit; other design checks are excluded.</footer>
+  </main>
+  <script>
+    const spanInput = document.getElementById('span');
+    const calculateButton = document.getElementById('calculate');
+    function matchCalculateWidth() { calculateButton.style.width = `${spanInput.getBoundingClientRect().width}px`; }
+    matchCalculateWidth();
+    window.addEventListener('resize', matchCalculateWidth);
+    const tabButtons = [...document.querySelectorAll('[role="tab"]')];
+    tabButtons.forEach((button, index) => button.addEventListener('click', () => {
+      tabButtons.forEach((tab, i) => { tab.setAttribute('aria-selected', String(i === index)); document.getElementById(tab.getAttribute('aria-controls')).hidden = i !== index; });
+    }));
+    function exportTable(format) {
+      const rows = [...document.querySelectorAll('#overview tr')].map(row => [...row.cells].map(cell => cell.textContent.trim()));
+      const content = format === 'csv' ? rows.map(row => row.map(value => `"${value.replaceAll('"', '""')}"`).join(',')).join('\n') : [
+        `| ${rows[0].join(' | ')} |`, `| ${rows[0].map(() => '---').join(' | ')} |`, ...rows.slice(1).map(row => `| ${row.join(' | ')} |`)
+      ].join('\n');
+      const blob = new Blob([content], { type: format === 'csv' ? 'text/csv' : 'text/markdown' });
+      const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `beam-overview.${format === 'csv' ? 'csv' : 'md'}`; link.click(); URL.revokeObjectURL(link.href);
+    }
+    document.getElementById('csv-export').addEventListener('click', () => exportTable('csv'));
+    document.getElementById('md-export').addEventListener('click', () => exportTable('markdown'));
+    const staleResults = document.getElementById('stale-results');
+    const form = document.querySelector('.form');
+    function markStale() { staleResults.textContent = 'Inputs changed. Results need recalculation.'; staleResults.hidden = false; }
+    form.addEventListener('input', markStale);
+    form.addEventListener('change', markStale);
+    document.querySelectorAll('.add').forEach(button => button.addEventListener('click', () => {
+      const group = button.closest('.group'); const row = loadTemplate.cloneNode(true);
+      row.querySelectorAll('input').forEach(input => { input.value = ''; input.removeAttribute('aria-invalid'); }); group.insertBefore(row, group.querySelector('.note'));
+      const note = group.querySelector('.note'); note.textContent = 'Enter load magnitude, start, and end positions.'; staleResults.hidden = false;
+    }));
+    document.querySelectorAll('.remove').forEach(element => { element.outerHTML = '<button class="remove" type="button" aria-label="Remove uniform load">×</button>'; });
+    const loadTemplate = document.querySelector('.load-row').cloneNode(true);
+    form.addEventListener('click', event => {
+      if (!event.target.matches('.remove')) return;
+      event.target.closest('.load-row').remove(); staleResults.hidden = false;
+    });
+    document.getElementById('safety-factor').addEventListener('input', event => {
+      const input = event.currentTarget, group = input.closest('.group');
+      let message = group.querySelector('.error');
+      const invalid = !Number.isFinite(input.valueAsNumber) || input.valueAsNumber < 1;
+      group.classList.toggle('invalid', invalid);
+      if (invalid && !message) { message = document.createElement('p'); message.className = 'error'; message.id = 'safety-error'; message.setAttribute('role','alert'); group.appendChild(message); }
+      if (message) { message.textContent = invalid ? 'Enter a finite safety factor of at least 1.0.' : ''; if (!invalid) message.remove(); }
+      input.setAttribute('aria-invalid', String(invalid)); input.setAttribute('aria-describedby', invalid ? 'safety-note safety-error' : 'safety-note');
+    });
+    function fieldError(input, message) {
+      input.setAttribute('aria-invalid', String(Boolean(message)));
+      let error = input.parentElement.querySelector('.field-error');
+      if (!message) { if (error) error.remove(); input.removeAttribute('aria-errormessage'); return; }
+      if (!error) { error = document.createElement('p'); error.className = 'error field-error'; error.id = `field-error-${Math.random().toString(36).slice(2)}`; input.parentElement.appendChild(error); }
+      error.textContent = message; input.setAttribute('aria-errormessage', error.id);
+    }
+    calculateButton.addEventListener('click', () => {
+      let valid = true;
+      function check(input, condition, message) { const ok = input.value.trim() !== '' && Number.isFinite(Number(input.value)) && condition(Number(input.value)); fieldError(input, ok ? '' : message); valid = valid && ok; }
+      check(spanInput, value => value > 0, 'Enter a span greater than zero.');
+      const factor = document.getElementById('safety-factor');
+      check(factor, value => value >= 1, 'Enter a safety factor of at least 1.');
+      const span = Number(spanInput.value);
+      document.querySelectorAll('.load-row').forEach(row => {
+        const [magnitude, start, end] = row.querySelectorAll('input');
+        check(magnitude, () => true, 'Enter a finite load intensity.');
+        check(start, value => value >= 0 && value < span, 'Start must be on the span and before the end.');
+        check(end, value => value > Number(start.value) && value <= span, 'End must be after start and on the span.');
+      });
+      staleResults.hidden = false;
+      staleResults.textContent = valid ? 'Calculating…' : 'Correct the highlighted fields before calculating.';
+      if (valid) calculateBeam();
+    });
+    // Euler–Bernoulli beam response for superimposed partial uniform loads.
+    // Coordinates and loads are in feet and kips; EI is in kip-in².
+    function analyzeBeam(L, loads, cantilever, E, I) {
+      const total = loads.reduce((s, q) => s + q.w * (q.b - q.a), 0);
+      const moment = loads.reduce((s, q) => s + q.w * (q.b*q.b - q.a*q.a) / 2, 0);
+      const right = cantilever ? 0 : moment / L;
+      const left = total - right, fixed = cantilever ? -moment : 0;
+      const p = (x, a, n) => Math.max(0, x - a) ** n;
+      function response(x) {
+        let v = left, m = fixed + left*x, integral = fixed*x*x/2 + left*x*x*x/6;
+        for (const q of loads) {
+          v -= q.w * (p(x,q.a,1) - p(x,q.b,1));
+          m -= q.w * (p(x,q.a,2) - p(x,q.b,2))/2;
+          integral -= q.w * (p(x,q.a,4) - p(x,q.b,4))/24;
+        }
+        return {v,m,integral};
+      }
+      const correction = cantilever ? 0 : response(L).integral / L;
+      function at(x) { const r = response(x); return {v:r.v,m:r.m,d:(r.integral - correction*x)*1728/(E*I)}; }
+      return {left,right,fixed,at};
+    }
+    function calculateBeam() {
+      const L = Number(spanInput.value), factor = Number(document.getElementById('safety-factor').value);
+      const loads = [...document.querySelectorAll('.load-row')].map(row => { const a = [...row.querySelectorAll('input')].map(i => Number(i.value)); return {w:a[0],a:a[1],b:a[2]}; });
+      const wood = document.getElementById('material').value === 'wood';
+      const mat = wood ? {E:1400,I:47.63,S:13.140625,F:1.065} : {E:29000,I:204,S:33.4,F:33};
+      const cantilever = document.getElementById('support').value === 'Cantilever';
+      const beam = analyzeBeam(L, loads, cantilever, mat.E, mat.I);
+      const samples = Array.from({length:1201}, (_, i) => { const x=L*i/1200; return {x,...beam.at(x)}; });
+      const maxM = Math.max(...samples.map(p=>Math.abs(p.m))), maxD = Math.max(...samples.map(p=>Math.abs(p.d)));
+      const stress = maxM*12/mat.S, limit = mat.F/factor, dlimit = L*12/360;
+      const fmt = x => Number(x).toFixed(3);
+      const bendPass = stress <= limit, defPass = maxD <= dlimit;
+      const rows = [['Left reaction',fmt(beam.left),'kip'], ...(cantilever ? [['Fixed-end moment',fmt(beam.fixed),'kip-ft']] : [['Right reaction',fmt(beam.right),'kip']]), ['Maximum moment',fmt(maxM),'kip-ft'],['Maximum deflection',fmt(maxD),'in'],['Bending',`${bendPass?'PASS':'FAIL'} · ${fmt(stress)} / ${fmt(limit)}`,'ksi'],['Deflection',`${defPass?'PASS':'FAIL'} · ${fmt(maxD)} / ${fmt(dlimit)}`,'in']];
+      document.querySelector('#overview tbody').innerHTML = rows.map(row=>`<tr>${row.map(cell=>`<td>${cell}</td>`).join('')}</tr>`).join('');
+      const cards = document.querySelectorAll('.check');
+      cards[0].querySelector('span').textContent = `fb = ${fmt(stress)} ksi · Limit ${fmt(limit)} ksi`;
+      cards[1].querySelector('span').textContent = `${fmt(maxD)} in · Limit L/360 = ${fmt(dlimit)} in`;
+      [bendPass,defPass].forEach((pass,i)=>{const badge=cards[i].querySelector('.pass'); badge.textContent=pass?'PASS':'FAIL';badge.style.background=pass?'#e2f2e9':'#ffe3e1';badge.style.color=pass?'#18704e':'#a52b20';});
+      ['shear','moment','deflection'].forEach((name,i)=>{
+        const key=['v','m','d'][i], svg=document.querySelector(`#panel-${name} svg`);
+        const extent=Math.max(...samples.map(p=>Math.abs(p[key]))), scale=extent || 1;
+        const points=samples.map(p=>`${(100+560*p.x/L).toFixed(2)},${(55-40*p[key]/scale).toFixed(2)}`).join(' ');
+        svg.innerHTML=`<path d="M100 10V100H660M100 55H660" fill="none" stroke="#cbd7df"/><polyline points="${points}" fill="none" stroke="#176b87" stroke-width="2.5"/><text x="60" y="18" fill="#71828f" font-size="10">${fmt(extent)}</text><text x="100" y="119" text-anchor="middle" font-size="10">0</text><text x="660" y="119" text-anchor="middle" font-size="10">${fmt(L)} ft</text>`;
+        svg.setAttribute('aria-label', `${name} diagram, maximum absolute value ${fmt(extent)}`);
+      });
+      const svg=document.querySelector('.beam-svg');
+      const arrows=loads.map((q,i)=>{const a=100+560*q.a/L,b=100+560*q.b/L; return `<path d="M${a} ${35+i*4}H${b}" stroke="#176b87"/><text x="${(a+b)/2}" y="${20+i*12}" text-anchor="middle" font-size="11">${fmt(q.w)} kip/ft</text>${q.w===0?'':Array.from({length:6},(_,j)=>{const x=a+(b-a)*(j+.5)/6;return `<path d="M${x} ${q.w>0?'45V76':'76V45'}" stroke="#176b87" marker-end="url(#arrow)"/>`;}).join('')}`;}).join('');
+      svg.innerHTML=`<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M1 1L7 4L1 7" fill="none" stroke="#176b87" stroke-width="1.5"/></marker></defs>${arrows}<rect x="100" y="82" width="560" height="12" rx="2" fill="#244c62"/>${cantilever?'<path d="M100 65V112M90 65V112" stroke="#748996" stroke-width="3"/>':'<path d="M100 96L86 119H114Z M660 96L646 119H674Z" fill="#e7eef2" stroke="#748996"/>'}<path d="M100 151H660M100 145V157M660 145V157" stroke="#8295a2"/><text x="380" y="169" text-anchor="middle" font-size="12">${fmt(L)} ft</text>`;
+      svg.setAttribute('aria-label', `${cantilever?'Cantilever':'Simply supported'} beam, span ${fmt(L)} feet, ${loads.length} uniform loads`);
+      staleResults.hidden = true;
+      document.querySelector('.sample').textContent='Illustrative analysis';
+      document.querySelector('.badge').textContent='Results calculated';
+    }
+    calculateBeam();
+  </script>
+</body>
+</html>
