@@ -139,3 +139,15 @@
 - Asked: Move Save/Open from the File menu to buttons at the bottom.
 - Changed: Removed the File menu and added separate Open and Save buttons anchored to the bottom of the input panel. Updated the spec to reflect the button placement.
 - Worked: Changes are in place; runtime appearance was not tested.
+
+- Asked: Add a same-size Save Results button beneath Open and Save.
+- Changed: Added a Save Results button that exports the current inputs, result summary, and sampled diagram series to JSON. It requires results to be current and asks the user to Calculate again if inputs have changed. Documented the export in the spec.
+- Worked: Implementation is in place; runtime behavior was not tested.
+
+- Asked: Make Save Results as wide as Open and Save together, including their gap.
+- Changed: Expanded Save Results across the full button row so its width matches the combined Open and Save buttons.
+- Worked: Grid layout updated; runtime appearance was not tested.
+
+- Asked: Save Results as CSV.
+- Changed: Changed Save Results to create a CSV containing beam inputs and result summary in the first data row, followed by sampled position, shear, moment, and deflection values. JSON remains the format for saving/opening beam designs.
+- Worked: Code and spec updated; runtime export was not tested.

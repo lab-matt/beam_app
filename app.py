@@ -1,6 +1,7 @@
 """Tkinter front end for the Beam Designer."""
 
 import json
+import csv
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 import numpy as np
@@ -21,6 +22,8 @@ class BeamApp(tk.Tk):
         self.rowconfigure(0, weight=1)
         self.vars = {}
         self.errors = {}
+        self.results_current = False
+        self.last_result = None
         self._build()
         self.calculate()
 
@@ -62,6 +65,65 @@ class BeamApp(tk.Tk):
             messagebox.showerror("Could not save design", str(exc), parent=self)
             return
         self.status.configure(text=f"Design saved to {path}", foreground="#18704e")
+
+    def save_results(self):
+        if not self.results_current or self.last_result is None:
+            messagebox.showinfo("Results need updating", "Press Calculate to update the results before saving them.", parent=self)
+            return
+        path = filedialog.asksaveasfilename(
+            title="Save analysis results", defaultextension=".csv",
+            filetypes=(("CSV files", "*.csv"), ("All files", "*")),
+        )
+        if not path:
+            return
+        result = self.last_result
+        summary_keys = (
+            "reaction_left_kip", "reaction_right_kip", "fixed_moment_kip_ft",
+            "max_moment_kip_ft", "moment_at_ft", "max_deflection_in",
+            "deflection_at_ft", "bending_stress_ksi", "bending_limit_ksi",
+            "bending_pass", "deflection_limit_in", "deflection_pass",
+        )
+        design = self._design_data()
+        load = design["loads"][0]
+        metadata = {
+            "support": design["support"],
+            "span_ft": design["span_ft"],
+            "section": design["section"],
+            "additional_safety_factor": design["additional_safety_factor"],
+            "deflection_limit_in": design["deflection_limit_in"],
+            "load_intensity_kip_ft": load["intensity_kip_ft"],
+            "load_start_ft": load["start_ft"],
+            "load_end_ft": load["end_ft"],
+            **{key: self._scalar_value(result[key]) for key in summary_keys},
+        }
+        diagram_columns = (
+            ("position_ft", result["x_ft"]),
+            ("shear_kip", result["shear_kip"]),
+            ("moment_kip_ft", result["moment_kip_ft"]),
+            ("deflection_in", result["deflection_in"]),
+        )
+        headers = list(metadata) + [name for name, _ in diagram_columns]
+        try:
+            with open(path, "w", encoding="utf-8", newline="") as results_file:
+                writer = csv.DictWriter(results_file, fieldnames=headers)
+                writer.writeheader()
+                for index in range(len(result["x_ft"])):
+                    row = metadata.copy() if index == 0 else {}
+                    for name, values in diagram_columns:
+                        row[name] = self._scalar_value(values[index])
+                    writer.writerow(row)
+        except (OSError, ValueError, KeyError) as exc:
+            messagebox.showerror("Could not save results", str(exc), parent=self)
+            return
+        self.status.configure(text=f"Results saved to {path}", foreground="#18704e")
+
+    @staticmethod
+    def _scalar_value(value):
+        if isinstance(value, np.ndarray):
+            return value.tolist()
+        if isinstance(value, np.generic):
+            return value.item()
+        return value
 
     def open_design(self):
         path = filedialog.askopenfilename(
@@ -140,9 +202,11 @@ class BeamApp(tk.Tk):
         left.rowconfigure(spacer.grid_info()["row"], weight=1)
         design_buttons = ttk.Frame(left)
         design_buttons.grid(sticky="ew", pady=(6, 0))
-        design_buttons.columnconfigure((0, 1), weight=1)
-        ttk.Button(design_buttons, text="Open…", command=self.open_design).grid(row=0, column=0, sticky="ew", padx=(0, 4))
-        ttk.Button(design_buttons, text="Save…", command=self.save_design).grid(row=0, column=1, sticky="ew", padx=(4, 0))
+        for column in range(4):
+            design_buttons.columnconfigure(column, weight=1, uniform="design_button")
+        ttk.Button(design_buttons, text="Open…", command=self.open_design).grid(row=0, column=0, columnspan=2, sticky="ew", padx=(0, 4), pady=(0, 4))
+        ttk.Button(design_buttons, text="Save…", command=self.save_design).grid(row=0, column=2, columnspan=2, sticky="ew", padx=(4, 0), pady=(0, 4))
+        ttk.Button(design_buttons, text="Save Results", command=self.save_results).grid(row=1, column=0, columnspan=4, sticky="ew")
         for var in self.vars.values():
             var.trace_add("write", self._mark_stale)
 
@@ -170,6 +234,7 @@ class BeamApp(tk.Tk):
         self.errors[label] = box
 
     def _mark_stale(self, *_):
+        self.results_current = False
         if hasattr(self, "status"):
             self.status.configure(text="Inputs changed; press Calculate to update results.", foreground="#8a4b08")
 
@@ -185,6 +250,7 @@ class BeamApp(tk.Tk):
                 raise ValueError("Enter finite numeric values in every field.")
             result = analyze(span, self.vars["Support"].get(), [UniformLoad(intensity, start, end)], MEMBERS[self.vars["Member"].get()], safety)
         except (ValueError, KeyError) as exc:
+            self.results_current = False
             self.status.configure(text=str(exc), foreground="#b42318")
             for ent in self.errors.values():
                 ent.configure(style="Invalid.TEntry")
@@ -193,6 +259,8 @@ class BeamApp(tk.Tk):
             return
         for ent in self.errors.values():
             ent.configure(style="TEntry")
+        self.last_result = result
+        self.results_current = True
         self.status.configure(text="Results updated.", foreground="#18704e")
         self.results.configure(text=(f"Left reaction: {result['reaction_left_kip']:.3f} kip\n"
             f"Right reaction: {result['reaction_right_kip']:.3f} kip\n"

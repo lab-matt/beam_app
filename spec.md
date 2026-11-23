@@ -9,9 +9,10 @@ of bending stress and deflection for the specified loading.
 - Uniform loads (kip/ft); no point loads
 - A steel W-shape or a lumber size, with species and grade for lumber
 - Additional safety factor, default 1.0 and minimum 1.0
-- Open and save buttons at the bottom of the input panel for JSON beam
-  designs, including support, span, section, uniform load, safety factor,
-  and the derived deflection limit
+- Open, save, and save-results buttons at the bottom of the input panel.
+  Beam designs are stored as JSON, including support, span, section, uniform
+  load, safety factor, and the derived deflection limit. Save Results exports
+  the current analysis summary and diagram data as CSV.
 - Analysis limits are fixed by the specification and material properties;
   design files cannot change them. The deflection limit remains L/360.
 
