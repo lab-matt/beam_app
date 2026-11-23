@@ -117,6 +117,94 @@ class BeamApp(tk.Tk):
             return
         self.status.configure(text=f"Results saved to {path}", foreground="#18704e")
 
+    def save_pdf(self):
+        if not self.results_current or self.last_result is None:
+            messagebox.showinfo("Results need updating", "Press Calculate to update the results before saving the calculation sheet.", parent=self)
+            return
+        path = filedialog.asksaveasfilename(
+            title="Save calculation sheet", defaultextension=".pdf",
+            filetypes=(("PDF files", "*.pdf"), ("All files", "*")),
+        )
+        if not path:
+            return
+        try:
+            self._write_calculation_pdf(path)
+        except (OSError, ValueError, KeyError) as exc:
+            messagebox.showerror("Could not save PDF", str(exc), parent=self)
+            return
+        self.status.configure(text=f"Calculation sheet saved to {path}", foreground="#18704e")
+
+    def _write_calculation_pdf(self, path):
+        design = self._design_data()
+        result = self.last_result
+        load = design["loads"][0]
+        figure = Figure(figsize=(8.5, 11), dpi=150)
+        grid = figure.add_gridspec(12, 1, left=0.11, right=0.94, top=0.95, bottom=0.07, hspace=0.58)
+
+        title_ax = figure.add_subplot(grid[0, 0])
+        title_ax.axis("off")
+        title_ax.text(0, 0.92, "BEAM CALCULATION SHEET", fontsize=17, weight="bold", color="#263b4a", va="top")
+        title_ax.text(0, 0.12, "Beam Designer · Analysis summary", fontsize=9, color="#526574", va="bottom")
+
+        inputs_ax = figure.add_subplot(grid[1:3, 0])
+        inputs_ax.axis("off")
+        inputs = [
+            ["Support", design["support"], "Span", f'{design["span_ft"]:g} ft'],
+            ["Section", design["section"], "Safety factor", f'{design["additional_safety_factor"]:g}'],
+            ["Uniform load", f'{load["intensity_kip_ft"]:g} kip/ft', "Load extent", f'{load["start_ft"]:g}–{load["end_ft"]:g} ft'],
+            ["Deflection limit", f'{design["deflection_limit_in"]:.3f} in (L/360)', "Bending basis", "Allowable stress / safety factor"],
+        ]
+        table = inputs_ax.table(cellText=inputs, colWidths=[0.19, 0.31, 0.19, 0.31], cellLoc="left", bbox=[0, 0, 1, 1])
+        table.auto_set_font_size(False)
+        table.set_fontsize(8)
+        for (row, col), cell in table.get_celld().items():
+            cell.set_edgecolor("#d6dee4")
+            if col in (0, 2):
+                cell.set_facecolor("#edf2f5")
+                cell.set_text_props(weight="bold", color="#263b4a")
+            else:
+                cell.set_facecolor("white")
+
+        check_ax = figure.add_subplot(grid[3, 0])
+        check_ax.axis("off")
+        check_ax.text(0, 0.98, "DESIGN CHECKS", fontsize=10, weight="bold", color="#263b4a", va="top")
+        bending_status = "PASS" if result["bending_pass"] else "FAIL"
+        deflection_status = "PASS" if result["deflection_pass"] else "FAIL"
+        check_ax.text(0.02, 0.57, f'BENDING  {bending_status}    {result["bending_stress_ksi"]:.3f} / {result["bending_limit_ksi"]:.3f} ksi', fontsize=9, weight="bold", color="#18704e" if result["bending_pass"] else "#b42318")
+        check_ax.text(0.52, 0.57, f'DEFLECTION  {deflection_status}    {result["max_deflection_in"]:.3f} / {result["deflection_limit_in"]:.3f} in', fontsize=9, weight="bold", color="#18704e" if result["deflection_pass"] else "#b42318")
+        check_ax.text(0.02, 0.12, f'Reactions: left {result["reaction_left_kip"]:.3f} kip · right {result["reaction_right_kip"]:.3f} kip', fontsize=8, color="#526574")
+
+        beam_ax = figure.add_subplot(grid[4:6, 0])
+        span = design["span_ft"]
+        beam_ax.plot([0, span], [0, 0], color="#263b4a", lw=5, solid_capstyle="round")
+        for px in np.linspace(load["start_ft"], load["end_ft"], max(5, int(span * 1.5))):
+            beam_ax.annotate("", (px, 0.10), (px, 0.48), arrowprops={"arrowstyle": "->", "color": "#b04c37", "lw": 1})
+        beam_ax.text((load["start_ft"] + load["end_ft"]) / 2, 0.54, f'{load["intensity_kip_ft"]:g} kip/ft', ha="center", fontsize=8, color="#b04c37")
+        if design["support"] == "Simply supported":
+            beam_ax.scatter([0, span], [-0.10, -0.10], marker="^", color="#176b87", s=48)
+        else:
+            beam_ax.plot([0, 0], [-0.28, 0.28], color="#176b87", lw=4)
+        beam_ax.set_xlim(-span * 0.04, span * 1.04)
+        beam_ax.set_ylim(-0.35, 0.72)
+        beam_ax.set_title("BEAM AND LOADING", loc="left", fontsize=9, weight="bold", color="#263b4a", pad=3)
+        beam_ax.axis("off")
+
+        chart_specs = [
+            (grid[6:8, 0], result["shear_kip"], "SHEAR", "kip", "#176b87"),
+            (grid[8:10, 0], result["moment_kip_ft"], "MOMENT", "kip-ft", "#b04c37"),
+            (grid[10:12, 0], result["deflection_in"], "DEFLECTION", "in", "#18704e"),
+        ]
+        for rows, values, label, unit, color in chart_specs:
+            ax = figure.add_subplot(rows)
+            ax.plot(result["x_ft"], values, color=color, lw=1.5)
+            ax.axhline(0, color="#82919d", lw=0.6)
+            ax.set_ylabel(unit, fontsize=7)
+            ax.set_title(label, loc="left", fontsize=9, weight="bold", color="#263b4a", pad=2)
+            ax.grid(alpha=0.18)
+            ax.tick_params(labelsize=7)
+        figure.axes[-1].set_xlabel("Position along span (ft)", fontsize=7)
+        figure.savefig(path, format="pdf")
+
     @staticmethod
     def _scalar_value(value):
         if isinstance(value, np.ndarray):
@@ -207,6 +295,7 @@ class BeamApp(tk.Tk):
         ttk.Button(design_buttons, text="Open…", command=self.open_design).grid(row=0, column=0, columnspan=2, sticky="ew", padx=(0, 4), pady=(0, 4))
         ttk.Button(design_buttons, text="Save…", command=self.save_design).grid(row=0, column=2, columnspan=2, sticky="ew", padx=(4, 0), pady=(0, 4))
         ttk.Button(design_buttons, text="Save Results", command=self.save_results).grid(row=1, column=0, columnspan=4, sticky="ew")
+        ttk.Button(design_buttons, text="Save PDF", command=self.save_pdf).grid(row=2, column=0, columnspan=4, sticky="ew", pady=(4, 0))
         for var in self.vars.values():
             var.trace_add("write", self._mark_stale)
 

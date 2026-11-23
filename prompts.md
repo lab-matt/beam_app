@@ -151,3 +151,7 @@
 - Asked: Save Results as CSV.
 - Changed: Changed Save Results to create a CSV containing beam inputs and result summary in the first data row, followed by sampled position, shear, moment, and deflection values. JSON remains the format for saving/opening beam designs.
 - Worked: Code and spec updated; runtime export was not tested.
+
+- Asked: Add a PDF calculation sheet with inputs at the top, checks and diagrams below, styled after the reference, with a button matching Save Results and placed underneath it.
+- Changed: Added a full-width Save PDF button below Save Results and a one-page Letter portrait PDF layout containing support, span, section, load, safety factor, deflection limit, reactions, bending and deflection checks, beam/loading illustration, and shear, moment, and deflection diagrams. PDF export requires current calculation results.
+- Worked: Generated a one-page PDF for a simply supported example and visually inspected its rendered page. The save dialog, stale-results prompt, cancellation, and cantilever layout were not exercised through the GUI.

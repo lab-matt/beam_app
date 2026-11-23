@@ -12,7 +12,9 @@ of bending stress and deflection for the specified loading.
 - Open, save, and save-results buttons at the bottom of the input panel.
   Beam designs are stored as JSON, including support, span, section, uniform
   load, safety factor, and the derived deflection limit. Save Results exports
-  the current analysis summary and diagram data as CSV.
+  the current analysis summary and diagram data as CSV. Save PDF creates a
+  one-page Letter portrait calculation sheet with inputs at the top, followed
+  by checks and the beam response diagrams.
 - Analysis limits are fixed by the specification and material properties;
   design files cannot change them. The deflection limit remains L/360.
 
